@@ -16,15 +16,19 @@ pipeline {
         stage('Build Image') {
             steps {
                 // Builds the Docker image
-                sh 'sudo docker build -t static-website-nginx:develop-${BUILD_ID} .'
+                sh '''
+		sudo su
+		docker build -t static-website-nginx:develop-${BUILD_ID} .
+		'''
             }
         }
 
         stage('Run Container') {
             steps {
                 // Stops and removes existing container, then runs a new one
-                sh 'sudo docker stop develop-container || true && sudo docker rm develop-container || true'
-                sh 'sudo docker run --name develop-container -d -p 8081:80 static-website-nginx:develop-${BUILD_ID}'
+                sh ''' sudo su 
+		docker stop develop-container || true && sudo docker rm develop-container || true'''
+                sh 'sudo su docker run --name develop-container -d -p 8081:80 static-website-nginx:develop-${BUILD_ID}'
             }
         }
 
@@ -39,11 +43,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh '''
-                        sudo docker login -u $USERNAME -p $PASSWORD
-                        sudo docker tag static-website-nginx:develop-${BUILD_ID} $USERNAME/static-website-nginx:latest
-                        sudo docker tag static-website-nginx:develop-${BUILD_ID} $USERNAME/static-website-nginx:develop-${BUILD_ID}
-                        sudo docker push $USERNAME/static-website-nginx:latest
-                        sudo docker push $USERNAME/static-website-nginx:develop-${BUILD_ID}
+                        sudo su docker login -u $USERNAME -p $PASSWORD
+                        sudo su docker tag static-website-nginx:develop-${BUILD_ID} $USERNAME/static-website-nginx:latest
+                        sudo su docker tag static-website-nginx:develop-${BUILD_ID} $USERNAME/static-website-nginx:develop-${BUILD_ID}
+                        sudo su docker push $USERNAME/static-website-nginx:latest
+                        sudo su docker push $USERNAME/static-website-nginx:develop-${BUILD_ID}
                     '''
                 }
             }
